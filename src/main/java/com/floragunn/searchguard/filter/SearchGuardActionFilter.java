@@ -20,6 +20,7 @@ package com.floragunn.searchguard.filter;
 import java.io.Serializable;
 import java.lang.reflect.Method;
 import java.net.InetAddress;
+import java.net.InetSocketAddress;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -227,7 +228,10 @@ public class SearchGuardActionFilter implements ActionFilter {
             }
         }
 
-        if (ci.contains(settings.get(ConfigConstants.SEARCHGUARD_CONFIG_INDEX_NAME, ConfigConstants.DEFAULT_SECURITY_CONFIG_INDEX))) {
+        final InetAddress resolvedAddress = (InetAddress) request.getFromContext("searchguard_resolved_rest_address");
+
+        if (ci.contains(settings.get(ConfigConstants.SEARCHGUARD_CONFIG_INDEX_NAME, ConfigConstants.DEFAULT_SECURITY_CONFIG_INDEX))
+                && ! resolvedAddress.isLoopbackAddress()) {
             auditListener.onMissingPrivileges(user.getName(), request);
             throw new ForbiddenException("Only allowed from localhost (loopback)");
 
@@ -241,8 +245,6 @@ public class SearchGuardActionFilter implements ActionFilter {
             }
 
         }
-
-        final InetAddress resolvedAddress = (InetAddress) request.getFromContext("searchguard_resolved_rest_address");
 
         if (resolvedAddress == null) {
             //not a rest request
